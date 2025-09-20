@@ -1,17 +1,17 @@
+// app.js
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const cookieParser = require('cookie-parser');
 const authRoutes = require('./routes/auth');
-const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs');
 
 // Swagger
-const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-
-dotenv.config();
+const swaggerSpec = require('./config/swagger'); // import swaggerSpec từ config/swagger.js
 
 const app = express();
 
@@ -44,22 +44,12 @@ app.use(
 // Routes
 app.use('/auth', authRoutes);
 
-// Swagger config
-const swaggerOptions = {
-  swaggerDefinition: {
-    openapi: "3.0.0",
-    info: {
-      title: "Node Session & Cookie API",
-      version: "1.0.0",
-      description: "API demo using session and cookie in Node.js",
-    },
-    servers: [{ url: "http://localhost:" + process.env.PORT }],
-  },
-  apis: ['./routes/*.js'],
-};
+// Swagger UI route
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-const swaggerDocs = swaggerJsDoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+// Xuất swagger.json ra root folder (chỉ chạy 1 lần là OK)
+fs.writeFileSync('./swagger.json', JSON.stringify(swaggerSpec, null, 2));
+console.log('✅ swagger.json đã được xuất ra root folder!');
 
 // Home route
 app.get('/', (req, res) => res.render('index', { userId: req.session.userId }));
