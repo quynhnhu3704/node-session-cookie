@@ -45,21 +45,44 @@ router.get('/login', (req, res) => {
   });
 });
 
+// GET profile form
+router.get('/profile', async (req, res) => {
+  if (!req.session.userId) {
+    return res.render('auth/profile', { title: 'Profile', error: 'Unauthorized', success: null, user: null });
+  }
+  const user = await User.findById(req.session.userId).select('-password');
+  res.render('auth/profile', { title: 'Profile', error: null, success: 'Profile loaded', user });
+});
+
 /**
- * --- API ROUTES ---
+ * --- API ROUTES WITH SWAGGER ---
  */
 
-// POST register
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       302:
+ *         description: Redirect to login on success
+ *       400:
+ *         description: Registration failed
+ */
 router.post('/register', async (req, res) => {
   try {
     const { username, password } = req.body;
     const user = new User({ username, password });
     await user.save();
-
-    // Redirect sang login với thông báo thành công qua query string
     res.redirect('/auth/login?success=User registered successfully');
   } catch (error) {
-    // Hiển thị lỗi trên form register
     res.render('auth/register', { 
       title: 'Register', 
       success: null, 
@@ -68,7 +91,24 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// POST login
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       302:
+ *         description: Redirect to profile on success
+ *       401:
+ *         description: Invalid credentials
+ */
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -78,39 +118,48 @@ router.post('/login', async (req, res) => {
       return res.render('auth/login', { title: 'Login', error: 'Invalid username or password', success: null });
     }
 
-    // Lưu session và set cookie
     req.session.userId = user._id;
     res.cookie('sid', req.sessionID, { httpOnly: true, maxAge: 1000 * 60 * 60 });
-
-    // Redirect sang profile
     res.redirect('/auth/profile');
   } catch (error) {
     res.render('auth/login', { title: 'Login', error: 'Login failed', success: null });
   }
 });
 
-// POST logout
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Auth]
+ *     responses:
+ *       302:
+ *         description: Redirect to login after logout
+ */
 router.post('/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) return res.render('auth/profile', { title: 'Profile', error: 'Logout failed', success: null, user: null });
-
-    // Xóa cookie
     res.clearCookie('sid');
     res.clearCookie('connect.sid');
-
-    // Redirect về trang login sau khi logout
     res.redirect('/auth/login');
   });
 });
 
-// GET profile (protected route)
-router.get('/profile', async (req, res) => {
-  if (!req.session.userId) {
-    return res.render('auth/profile', { title: 'Profile', error: 'Unauthorized', success: null, user: null });
-  }
-
-  const user = await User.findById(req.session.userId).select('-password');
-  res.render('auth/profile', { title: 'Profile', error: null, success: 'Profile loaded', user });
-});
+/**
+ * @swagger
+ * /auth/profile:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: User profile retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ */
 
 module.exports = router;
