@@ -1,0 +1,31 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-5" style="max-width: 600px; margin:auto;">
+  <h2 class="mb-4 text-center">User Profile</h2>
+
+  <% if (error) { %>
+    <div class="alert alert-danger"><%= error %></div>
+  <% } %>
+
+  <% if (success) { %>
+    <div class="alert alert-success"><%= success %></div>
+  <% } %>
+
+  <% if (user) { %>
+    <div class="card mb-4 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Welcome, <%= user.username %>!</h5><br>
+        <p class="card-text"><strong>ID:</strong> <%= user._id %></p>
+        <p class="card-text"><strong>Username:</strong> <%= user.username %></p>
+      </div>
+    </div>
+
+    <form action="/auth/logout" method="POST" class="d-flex justify-content-center">
+      <button type="submit" class="btn btn-warning w-50">Logout</button>
+    </form>
+  <% } else { %>
+    <p class="text-center">No user info available. <a href="/auth/login">Login</a></p>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

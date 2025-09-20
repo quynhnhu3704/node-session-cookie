@@ -1,0 +1,12 @@
+<%- include('partials/header') %>
+<h1>Welcome to Node.js Session & Cookie Demo</h1>
+<% if(userId){ %>
+<p>Your session userId: <%= userId %></p>
+<form action="/auth/logout" method="post">
+  <button class="btn btn-danger">Logout</button>
+</form>
+<% } else { %>
+<a href="/auth/login" class="btn btn-primary">Login</a>
+<a href="/auth/register" class="btn btn-success">Register</a>
+<% } %>
+<%- include('partials/footer') %>
